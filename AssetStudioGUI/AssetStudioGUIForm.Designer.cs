@@ -59,6 +59,10 @@
             this.importOptionsToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.saveOptionsToDiskToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showExpOpt = new System.Windows.Forms.ToolStripMenuItem();
+            this.optionsToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.sizeUnitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sizeUnitBytesBtn = new System.Windows.Forms.ToolStripMenuItem();
+            this.sizeUnitHumanBtn = new System.Windows.Forms.ToolStripMenuItem();
             this.modelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportAllObjectssplitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.exportSelectedObjectsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -280,6 +284,8 @@
             this.useDumpTreeViewToolStripMenuItem,
             this.buildTreeStructureToolStripMenuItem,
             this.importOptionsToolStripMenuItem,
+            this.optionsToolStripSeparator2,
+            this.sizeUnitMenuItem,
             this.showExpOpt});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
@@ -494,6 +500,39 @@
             this.showExpOpt.Size = new System.Drawing.Size(243, 22);
             this.showExpOpt.Text = "Export options";
             this.showExpOpt.Click += new System.EventHandler(this.showExpOpt_Click);
+            // 
+            // optionsToolStripSeparator2
+            // 
+            this.optionsToolStripSeparator2.Name = "optionsToolStripSeparator2";
+            this.optionsToolStripSeparator2.Size = new System.Drawing.Size(240, 6);
+            // 
+            // sizeUnitMenuItem
+            // 
+            this.sizeUnitMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.sizeUnitBytesBtn,
+            this.sizeUnitHumanBtn});
+            this.sizeUnitMenuItem.Name = "sizeUnitMenuItem";
+            this.sizeUnitMenuItem.Size = new System.Drawing.Size(243, 22);
+            this.sizeUnitMenuItem.Text = "Display Size In";
+            // 
+            // sizeUnitBytesBtn
+            // 
+            this.sizeUnitBytesBtn.CheckOnClick = true;
+            this.sizeUnitBytesBtn.Name = "sizeUnitBytesBtn";
+            this.sizeUnitBytesBtn.Size = new System.Drawing.Size(120, 22);
+            this.sizeUnitBytesBtn.Tag = "0";
+            this.sizeUnitBytesBtn.Text = "Bytes";
+            this.sizeUnitBytesBtn.Click += new System.EventHandler(this.sizeUnit_Click);
+            // 
+            // sizeUnitHumanBtn
+            // 
+            this.sizeUnitHumanBtn.Checked = true;
+            this.sizeUnitHumanBtn.CheckOnClick = true;
+            this.sizeUnitHumanBtn.Name = "sizeUnitHumanBtn";
+            this.sizeUnitHumanBtn.Size = new System.Drawing.Size(120, 22);
+            this.sizeUnitHumanBtn.Tag = "1";
+            this.sizeUnitHumanBtn.Text = "Human";
+            this.sizeUnitHumanBtn.Click += new System.EventHandler(this.sizeUnit_Click);
             // 
             // modelToolStripMenuItem
             // 
@@ -786,9 +825,9 @@
             // 
             // showConsoleToolStripMenuItem
             // 
-            this.showConsoleToolStripMenuItem.Checked = true;
+            this.showConsoleToolStripMenuItem.Checked = false;
             this.showConsoleToolStripMenuItem.CheckOnClick = true;
-            this.showConsoleToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.showConsoleToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Unchecked;
             this.showConsoleToolStripMenuItem.Name = "showConsoleToolStripMenuItem";
             this.showConsoleToolStripMenuItem.Size = new System.Drawing.Size(288, 22);
             this.showConsoleToolStripMenuItem.Text = "Show console logger";
@@ -1767,6 +1806,10 @@
         private System.Windows.Forms.ToolStripMenuItem extractFolderToolStripMenuItem;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.ToolStripMenuItem showExpOpt;
+        private System.Windows.Forms.ToolStripSeparator optionsToolStripSeparator2;
+        private System.Windows.Forms.ToolStripMenuItem sizeUnitMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem sizeUnitBytesBtn;
+        private System.Windows.Forms.ToolStripMenuItem sizeUnitHumanBtn;
         private GOHierarchy sceneTreeView;
         private System.Windows.Forms.ToolStripMenuItem debugMenuItem;
         private System.Windows.Forms.TabPage tabPage3;

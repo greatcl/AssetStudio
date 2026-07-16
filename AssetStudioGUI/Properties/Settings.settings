@@ -39,7 +39,7 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="showConsole" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="useFileLogger" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
@@ -85,6 +85,9 @@
     </Setting>
     <Setting Name="meshLazyLoad" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="sizeDisplayUnit" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
     </Setting>
     <Setting Name="rawByteArrayFromMono" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>

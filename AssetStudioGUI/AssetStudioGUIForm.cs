@@ -149,6 +149,9 @@ namespace AssetStudioGUI
             useDumpTreeViewToolStripMenuItem.Checked = Properties.Settings.Default.useDumpTreeView;
             autoPlayAudioAssetsToolStripMenuItem.Checked = Properties.Settings.Default.autoplayAudio;
             meshLazyLoadToolStripMenuItem.Checked = Properties.Settings.Default.meshLazyLoad;
+            var sizeUnit = (AssetItem.SizeUnit)Properties.Settings.Default.sizeDisplayUnit;
+            AssetItem.CurrentSizeUnit = sizeUnit;
+            UpdateSizeUnitCheck(sizeUnit);
             customBlockCompressionComboBox.SelectedIndex = 0;
             customBlockInfoCompressionComboBox.SelectedIndex = 0;
             assetsManager.Options.BundleOptions.DecompressToDisk = Properties.Settings.Default.decompressToDisk;
@@ -2699,6 +2702,32 @@ namespace AssetStudioGUI
             Properties.Settings.Default.meshLazyLoad = meshLazyLoadToolStripMenuItem.Checked;
             assetsManager.MeshLazyLoad = meshLazyLoadToolStripMenuItem.Checked;
             Properties.Settings.Default.Save();
+        }
+
+        private void sizeUnit_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripMenuItem)sender;
+            var unit = (AssetItem.SizeUnit)int.Parse(item.Tag.ToString());
+            UpdateSizeUnitCheck(unit);
+            AssetItem.CurrentSizeUnit = unit;
+            Properties.Settings.Default.sizeDisplayUnit = (int)unit;
+            Properties.Settings.Default.Save();
+
+            // Refresh asset list to show new units
+            if (assetListView.Items.Count > 0)
+            {
+                for (int i = 0; i < assetListView.Items.Count; i++)
+                {
+                    var assetItem = (AssetItem)assetListView.Items[i];
+                    assetItem.SubItems[4].Text = AssetItem.FormatSize(assetItem.FullSize);
+                }
+            }
+        }
+
+        private void UpdateSizeUnitCheck(AssetItem.SizeUnit unit)
+        {
+            sizeUnitBytesBtn.Checked = unit == AssetItem.SizeUnit.Bytes;
+            sizeUnitHumanBtn.Checked = unit == AssetItem.SizeUnit.Human;
         }
 
         private static void FbxInitOptions(string base64String)

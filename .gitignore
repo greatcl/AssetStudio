@@ -341,3 +341,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# WorkBuddy workspace data
+.workbuddy/

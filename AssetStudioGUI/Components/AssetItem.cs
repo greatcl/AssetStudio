@@ -16,6 +16,29 @@ namespace AssetStudioGUI
         public string UniqueID;
         public GameObjectTreeNode TreeNode;
 
+        public enum SizeUnit
+        {
+            Bytes,
+            Human
+        }
+
+        public static SizeUnit CurrentSizeUnit = SizeUnit.Human;
+
+        public static string FormatSize(long bytes)
+        {
+            return CurrentSizeUnit switch
+            {
+                SizeUnit.Bytes => bytes.ToString(),
+                SizeUnit.Human or _ => bytes switch
+                {
+                    >= 1073741824 => (bytes / 1073741824.0).ToString("0.##") + " GB",
+                    >= 1048576 => (bytes / 1048576.0).ToString("0.##") + " MB",
+                    >= 1024 => (bytes / 1024.0).ToString("0.##") + " KB",
+                    _ => bytes + " B"
+                }
+            };
+        }
+
         public AssetItem(Object asset)
         {
             Asset = asset;
@@ -33,7 +56,7 @@ namespace AssetStudioGUI
                 Container, //Container
                 TypeString, //Type
                 m_PathID.ToString(), //PathID
-                FullSize.ToString(), //Size
+                FormatSize(FullSize), //Size
             });
         }
     }
