@@ -111,6 +111,7 @@ namespace AssetStudioGUI
         private List<TreeNode> treeNodeSelectedList = new List<TreeNode>();
         private bool treeRecursionEnabled = true;
         private bool isRecursionEvent = false;
+        private List<CheckIssue> checkIssues = new List<CheckIssue>();
 
         private string openDirectoryBackup = string.Empty;
         private string saveDirectoryBackup = string.Empty;
@@ -342,6 +343,8 @@ namespace AssetStudioGUI
                 log += $" and {m_ObjectsCount - objectsCount} assets failed to read";
             }
             Logger.Info(log);
+
+            RunAtlasCheck();
         }
 
         private void typeToolStripMenuItem_Click(object sender, EventArgs e)
@@ -578,6 +581,9 @@ namespace AssetStudioGUI
                     break;
                 case 1:
                     assetListView.Select();
+                    break;
+                case 3:
+                    checkListView.Select();
                     break;
             }
         }
@@ -1600,6 +1606,9 @@ namespace AssetStudioGUI
             assetListView.Items.Clear();
             classesListView.Items.Clear();
             classesListView.Groups.Clear();
+            checkListView.Items.Clear();
+            checkIssues.Clear();
+            checkSummaryLabel.Text = "Missing: 0 | Unused: 0 | Waste: 0";
             selectedAnimationAssetsList.Clear();
             selectedIndicesPrevList.Clear();
             previewPanel.Image = Properties.Resources.preview;
@@ -1844,6 +1853,181 @@ namespace AssetStudioGUI
             }
         }
 
+        private void runCheckButton_Click(object sender, EventArgs e)
+        {
+            RunAtlasCheck();
+        }
+
+        private void checkScope_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!(sender is RadioButton radio) || !radio.Checked)
+                return;
+            if (assetsManager.AssetsFileList.Count == 0)
+                return;
+            RunAtlasCheck();
+        }
+
+        private void RunAtlasCheck()
+        {
+            checkListView.BeginUpdate();
+            checkListView.Items.Clear();
+            checkIssues.Clear();
+
+            if (assetsManager.AssetsFileList.Count == 0)
+            {
+                checkSummaryLabel.Text = "Missing: 0 | Unused: 0 | Waste: 0";
+                checkListView.EndUpdate();
+                return;
+            }
+
+            var scope = checkScopeSelectedRadio.Checked ? CheckScope.SelectedNode : CheckScope.WholeBundle;
+            var selectedNode = scope == CheckScope.SelectedNode ? sceneTreeView.SelectedNode : null;
+            checkIssues = ResourceChecker.Run(exportableAssets, scope, selectedNode);
+
+            foreach (var issue in checkIssues)
+            {
+                var item = new ListViewItem(issue.Severity.ToString());
+                item.SubItems.Add(FormatCheckCategory(issue.Category));
+                item.SubItems.Add(issue.Source ?? string.Empty);
+                item.SubItems.Add(issue.Target ?? string.Empty);
+                item.SubItems.Add(issue.Message ?? string.Empty);
+                item.SubItems.Add(issue.NodePath ?? string.Empty);
+                item.Tag = issue;
+                checkListView.Items.Add(item);
+            }
+
+            var missing = checkIssues.Count(x =>
+                x.Category == CheckCategory.MissingAtlasRef || x.Category == CheckCategory.MissingAtlasImage);
+            var unused = checkIssues.Count(x => x.Category == CheckCategory.UnusedAtlasImage);
+            var waste = checkIssues.Count(x => x.Category == CheckCategory.AtlasSpaceWaste);
+            checkSummaryLabel.Text = $"Missing: {missing} | Unused: {unused} | Waste: {waste} | Total: {checkIssues.Count}";
+            checkListView.EndUpdate();
+            StatusStripUpdate($"Check finished: Missing {missing}, Unused {unused}, Waste {waste}");
+        }
+
+        private static string FormatCheckCategory(CheckCategory category)
+        {
+            return category switch
+            {
+                CheckCategory.MissingAtlasRef => "MissingAtlasRef",
+                CheckCategory.MissingAtlasImage => "MissingAtlasImage",
+                CheckCategory.UnusedAtlasImage => "UnusedAtlasImage",
+                CheckCategory.AtlasSpaceWaste => "AtlasSpaceWaste",
+                _ => category.ToString()
+            };
+        }
+
+        private void checkListView_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            if (!e.IsSelected || !(e.Item.Tag is CheckIssue issue))
+                return;
+
+            previewPanel.Image = Properties.Resources.preview;
+            previewPanel.SizeMode = PictureBoxSizeMode.CenterImage;
+            classTextBox.Visible = false;
+            assetInfoLabel.Visible = false;
+            assetInfoLabel.Text = null;
+            textPreviewBox.Visible = false;
+            fontPreviewBox.Visible = false;
+            FMODpanel.Visible = false;
+            glControl1.Visible = false;
+            StatusStripUpdate("");
+            FMODreset();
+
+            if (issue.Category == CheckCategory.AtlasSpaceWaste && issue.Asset is Texture2D page)
+            {
+                PreviewAtlasSpaceWaste(issue, page);
+                return;
+            }
+
+            PreviewText($"{issue.Severity} / {FormatCheckCategory(issue.Category)}\r\n\r\n" +
+                        $"Source: {issue.Source}\r\n" +
+                        $"Target: {issue.Target}\r\n" +
+                        $"Node:   {issue.NodePath}\r\n\r\n" +
+                        $"{issue.Message}");
+        }
+
+        private void PreviewAtlasSpaceWaste(CheckIssue issue, Texture2D page)
+        {
+            var image = page.ConvertToImage(true);
+            if (image == null)
+            {
+                StatusStripUpdate("Unsupported texture format for preview.");
+                return;
+            }
+
+            var bitmap = new DirectBitmap(image);
+            image.Dispose();
+
+            var freeRects = ResourceChecker.ComputeFreeRects(issue.UsedRects, page.m_Width, page.m_Height);
+            using (var g = Graphics.FromImage(bitmap.Bitmap))
+            using (var freeFill = new SolidBrush(System.Drawing.Color.FromArgb(70, 235, 40, 40)))
+            using (var freePen = new Pen(System.Drawing.Color.FromArgb(235, 60, 60)))
+            using (var usedPen = new Pen(System.Drawing.Color.FromArgb(70, 220, 130)))
+            {
+                // Tinting the whole free area first makes the region read as one block instead of
+                // a pile of adjacent outlines.
+                foreach (var rect in freeRects)
+                    g.FillRectangle(freeFill, rect.X, page.m_Height - rect.Bottom, rect.Width, rect.Height);
+                foreach (var rect in freeRects)
+                    DrawAtlasRect(g, freePen, rect, page.m_Height);
+                if (issue.UsedRects != null)
+                {
+                    foreach (var rect in issue.UsedRects)
+                        DrawAtlasRect(g, usedPen, rect, page.m_Height);
+                }
+            }
+
+            PreviewTexture(bitmap);
+            assetInfoLabel.Text =
+                $"{page.m_Name}\n" +
+                $"{page.m_Width}x{page.m_Height} {page.m_TextureFormat}\n" +
+                $"Green: {issue.UsedRects?.Count ?? 0} used sprite(s), {issue.Target}\n" +
+                $"Red: {freeRects.Count} unused region(s)";
+            assetInfoLabel.Visible = true;
+        }
+
+        /// <summary>
+        /// Atlas rects use a bottom-left origin while the decoded preview is top-down, so Y is mirrored.
+        /// </summary>
+        private static void DrawAtlasRect(Graphics g, Pen pen, RectangleF rect, int pageHeight)
+        {
+            g.DrawRectangle(pen, rect.X, pageHeight - rect.Bottom,
+                Math.Max(1f, rect.Width - 1f), Math.Max(1f, rect.Height - 1f));
+        }
+
+        private void checkListView_DoubleClick(object sender, EventArgs e)
+        {
+            if (checkListView.SelectedItems.Count == 0)
+                return;
+            if (!(checkListView.SelectedItems[0].Tag is CheckIssue issue))
+                return;
+
+            if (issue.TreeNode != null)
+            {
+                sceneTreeView.SelectedNode = issue.TreeNode;
+                issue.TreeNode.EnsureVisible();
+                tabControl1.SelectedTab = tabPage1;
+                return;
+            }
+
+            if (issue.Asset == null)
+                return;
+
+            var assetItem = visibleAssets.FirstOrDefault(x => x.Asset == issue.Asset)
+                            ?? exportableAssets.FirstOrDefault(x => x.Asset == issue.Asset);
+            if (assetItem == null)
+                return;
+
+            tabControl1.SelectedTab = tabPage2;
+            var index = assetListView.Items.IndexOf(assetItem);
+            if (index < 0)
+                return;
+            assetListView.SelectedIndices.Clear();
+            assetListView.Items[index].Selected = true;
+            assetListView.Items[index].EnsureVisible();
+        }
+
         private void exportAllAssetsMenuItem_Click(object sender, EventArgs e)
         {
             ExportAssets(ExportFilter.All, ExportType.Convert);
@@ -2016,14 +2200,16 @@ namespace AssetStudioGUI
                         visibleAssets = visibleAssets.FindAll(x =>
                             x.Text.IndexOf(listSearch.Text, StringComparison.OrdinalIgnoreCase) >= 0
                             || x.SubItems[1].Text.IndexOf(listSearch.Text, StringComparison.OrdinalIgnoreCase) >= 0
-                            || x.SubItems[3].Text.IndexOf(listSearch.Text, StringComparison.OrdinalIgnoreCase) >= 0);
+                            || x.SubItems[3].Text.IndexOf(listSearch.Text, StringComparison.OrdinalIgnoreCase) >= 0
+                            || x.SubItems[5].Text.IndexOf(listSearch.Text, StringComparison.OrdinalIgnoreCase) >= 0);
                         listSearch.ForeColor = SystemColors.WindowText;
                         break;
                     case ListSearchFilterMode.Exclude:
                         visibleAssets = visibleAssets.FindAll(x =>
                             x.Text.IndexOf(listSearch.Text, StringComparison.OrdinalIgnoreCase) <= 0
                             && x.SubItems[1].Text.IndexOf(listSearch.Text, StringComparison.OrdinalIgnoreCase) <= 0
-                            && x.SubItems[3].Text.IndexOf(listSearch.Text, StringComparison.OrdinalIgnoreCase) <= 0);
+                            && x.SubItems[3].Text.IndexOf(listSearch.Text, StringComparison.OrdinalIgnoreCase) <= 0
+                            && x.SubItems[5].Text.IndexOf(listSearch.Text, StringComparison.OrdinalIgnoreCase) <= 0);
                         listSearch.ForeColor = SystemColors.WindowText;
                         break;
                     case ListSearchFilterMode.RegexName:

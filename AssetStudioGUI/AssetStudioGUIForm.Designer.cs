@@ -122,6 +122,7 @@
             this.columnHeaderType = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeaderPathID = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeaderSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeaderNodePath = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.panel1 = new System.Windows.Forms.Panel();
             this.listSearch = new System.Windows.Forms.RichTextBox();
             this.listSearchHistory = new System.Windows.Forms.ComboBox();
@@ -130,6 +131,20 @@
             this.classesListView = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.tabPageCheck = new System.Windows.Forms.TabPage();
+            this.checkListView = new System.Windows.Forms.ListView();
+            this.columnHeaderCheckSeverity = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeaderCheckCategory = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeaderCheckSource = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeaderCheckTarget = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeaderCheckMessage = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeaderCheckNodePath = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.checkToolbarPanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.checkSummaryLabel = new System.Windows.Forms.Label();
+            this.runCheckButton = new System.Windows.Forms.Button();
+            this.checkScopeSelectedRadio = new System.Windows.Forms.RadioButton();
+            this.checkScopeWholeRadio = new System.Windows.Forms.RadioButton();
+            this.checkScopeLabel = new System.Windows.Forms.Label();
             this.progressbarPanel = new System.Windows.Forms.Panel();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.tabControl2 = new System.Windows.Forms.TabControl();
@@ -193,6 +208,8 @@
             this.tabPage2.SuspendLayout();
             this.panel1.SuspendLayout();
             this.tabPage3.SuspendLayout();
+            this.tabPageCheck.SuspendLayout();
+            this.checkToolbarPanel.SuspendLayout();
             this.progressbarPanel.SuspendLayout();
             this.tabControl2.SuspendLayout();
             this.tabPage4.SuspendLayout();
@@ -924,6 +941,7 @@
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
+            this.tabControl1.Controls.Add(this.tabPageCheck);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
@@ -1008,7 +1026,8 @@
             this.columnHeaderContainer,
             this.columnHeaderType,
             this.columnHeaderPathID,
-            this.columnHeaderSize});
+            this.columnHeaderSize,
+            this.columnHeaderNodePath});
             this.assetListView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.assetListView.FullRowSelect = true;
             this.assetListView.GridLines = true;
@@ -1050,6 +1069,11 @@
             // 
             this.columnHeaderSize.Text = "Size";
             this.columnHeaderSize.Width = 50;
+            // 
+            // columnHeaderNodePath
+            // 
+            this.columnHeaderNodePath.Text = "Node Path";
+            this.columnHeaderNodePath.Width = 200;
             // 
             // panel1
             // 
@@ -1151,6 +1175,138 @@
             this.columnHeader2.DisplayIndex = 0;
             this.columnHeader2.Text = "ID";
             this.columnHeader2.Width = 70;
+            // 
+            // tabPageCheck
+            // 
+            this.tabPageCheck.Controls.Add(this.checkListView);
+            this.tabPageCheck.Controls.Add(this.checkToolbarPanel);
+            this.tabPageCheck.Location = new System.Drawing.Point(4, 22);
+            this.tabPageCheck.Name = "tabPageCheck";
+            this.tabPageCheck.Size = new System.Drawing.Size(472, 607);
+            this.tabPageCheck.TabIndex = 3;
+            this.tabPageCheck.Text = "Check";
+            this.tabPageCheck.UseVisualStyleBackColor = true;
+            // 
+            // checkListView
+            // 
+            this.checkListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeaderCheckSeverity,
+            this.columnHeaderCheckCategory,
+            this.columnHeaderCheckSource,
+            this.columnHeaderCheckTarget,
+            this.columnHeaderCheckMessage,
+            this.columnHeaderCheckNodePath});
+            this.checkListView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.checkListView.FullRowSelect = true;
+            this.checkListView.HideSelection = false;
+            this.checkListView.Location = new System.Drawing.Point(0, 56);
+            this.checkListView.MultiSelect = false;
+            this.checkListView.Name = "checkListView";
+            this.checkListView.Size = new System.Drawing.Size(472, 551);
+            this.checkListView.TabIndex = 1;
+            this.checkListView.UseCompatibleStateImageBehavior = false;
+            this.checkListView.View = System.Windows.Forms.View.Details;
+            this.checkListView.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.checkListView_ItemSelectionChanged);
+            this.checkListView.DoubleClick += new System.EventHandler(this.checkListView_DoubleClick);
+            // 
+            // columnHeaderCheckSeverity
+            // 
+            this.columnHeaderCheckSeverity.Text = "Severity";
+            this.columnHeaderCheckSeverity.Width = 70;
+            // 
+            // columnHeaderCheckCategory
+            // 
+            this.columnHeaderCheckCategory.Text = "Category";
+            this.columnHeaderCheckCategory.Width = 120;
+            // 
+            // columnHeaderCheckSource
+            // 
+            this.columnHeaderCheckSource.Text = "Source";
+            this.columnHeaderCheckSource.Width = 140;
+            // 
+            // columnHeaderCheckTarget
+            // 
+            this.columnHeaderCheckTarget.Text = "Target";
+            this.columnHeaderCheckTarget.Width = 120;
+            // 
+            // columnHeaderCheckMessage
+            // 
+            this.columnHeaderCheckMessage.Text = "Message";
+            this.columnHeaderCheckMessage.Width = 220;
+            // 
+            // columnHeaderCheckNodePath
+            // 
+            this.columnHeaderCheckNodePath.Text = "Node Path";
+            this.columnHeaderCheckNodePath.Width = 160;
+            // 
+            // checkToolbarPanel
+            // 
+            this.checkToolbarPanel.AutoSize = true;
+            this.checkToolbarPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.checkToolbarPanel.Controls.Add(this.checkScopeLabel);
+            this.checkToolbarPanel.Controls.Add(this.checkScopeWholeRadio);
+            this.checkToolbarPanel.Controls.Add(this.checkScopeSelectedRadio);
+            this.checkToolbarPanel.Controls.Add(this.runCheckButton);
+            this.checkToolbarPanel.Controls.Add(this.checkSummaryLabel);
+            this.checkToolbarPanel.SetFlowBreak(this.checkScopeSelectedRadio, true);
+            this.checkToolbarPanel.Dock = System.Windows.Forms.DockStyle.Top;
+            this.checkToolbarPanel.Location = new System.Drawing.Point(0, 0);
+            this.checkToolbarPanel.Name = "checkToolbarPanel";
+            this.checkToolbarPanel.Padding = new System.Windows.Forms.Padding(6, 4, 6, 4);
+            this.checkToolbarPanel.Size = new System.Drawing.Size(472, 62);
+            this.checkToolbarPanel.TabIndex = 0;
+            this.checkToolbarPanel.WrapContents = true;
+            // 
+            // checkScopeLabel
+            // 
+            this.checkScopeLabel.AutoSize = true;
+            this.checkScopeLabel.Margin = new System.Windows.Forms.Padding(3, 6, 6, 3);
+            this.checkScopeLabel.Name = "checkScopeLabel";
+            this.checkScopeLabel.TabIndex = 0;
+            this.checkScopeLabel.Text = "Scope:";
+            // 
+            // checkScopeWholeRadio
+            // 
+            this.checkScopeWholeRadio.AutoSize = true;
+            this.checkScopeWholeRadio.Checked = true;
+            this.checkScopeWholeRadio.Margin = new System.Windows.Forms.Padding(3, 4, 12, 3);
+            this.checkScopeWholeRadio.Name = "checkScopeWholeRadio";
+            this.checkScopeWholeRadio.TabIndex = 1;
+            this.checkScopeWholeRadio.TabStop = true;
+            this.checkScopeWholeRadio.Text = "Whole Bundle";
+            this.checkScopeWholeRadio.UseVisualStyleBackColor = true;
+            this.checkScopeWholeRadio.CheckedChanged += new System.EventHandler(this.checkScope_CheckedChanged);
+            // 
+            // checkScopeSelectedRadio
+            // 
+            this.checkScopeSelectedRadio.AutoSize = true;
+            this.checkScopeSelectedRadio.Margin = new System.Windows.Forms.Padding(3, 4, 3, 3);
+            this.checkScopeSelectedRadio.Name = "checkScopeSelectedRadio";
+            this.checkScopeSelectedRadio.TabIndex = 2;
+            this.checkScopeSelectedRadio.Text = "Selected Node (Prefab root)";
+            this.checkScopeSelectedRadio.UseVisualStyleBackColor = true;
+            this.checkScopeSelectedRadio.CheckedChanged += new System.EventHandler(this.checkScope_CheckedChanged);
+            // 
+            // runCheckButton
+            // 
+            this.runCheckButton.AutoSize = true;
+            this.runCheckButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.runCheckButton.Margin = new System.Windows.Forms.Padding(3, 3, 12, 3);
+            this.runCheckButton.MinimumSize = new System.Drawing.Size(88, 25);
+            this.runCheckButton.Name = "runCheckButton";
+            this.runCheckButton.Padding = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.runCheckButton.TabIndex = 3;
+            this.runCheckButton.Text = "Run Check";
+            this.runCheckButton.UseVisualStyleBackColor = true;
+            this.runCheckButton.Click += new System.EventHandler(this.runCheckButton_Click);
+            // 
+            // checkSummaryLabel
+            // 
+            this.checkSummaryLabel.AutoSize = true;
+            this.checkSummaryLabel.Margin = new System.Windows.Forms.Padding(3, 9, 3, 3);
+            this.checkSummaryLabel.Name = "checkSummaryLabel";
+            this.checkSummaryLabel.TabIndex = 4;
+            this.checkSummaryLabel.Text = "Missing: 0 | Unused: 0";
             // 
             // progressbarPanel
             // 
@@ -1737,6 +1893,9 @@
             this.tabPage2.ResumeLayout(false);
             this.panel1.ResumeLayout(false);
             this.tabPage3.ResumeLayout(false);
+            this.tabPageCheck.ResumeLayout(false);
+            this.checkToolbarPanel.ResumeLayout(false);
+            this.checkToolbarPanel.PerformLayout();
             this.progressbarPanel.ResumeLayout(false);
             this.tabControl2.ResumeLayout(false);
             this.tabPage4.ResumeLayout(false);
@@ -1772,6 +1931,7 @@
         private System.Windows.Forms.ToolStripMenuItem loadFolderToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeaderName;
         private System.Windows.Forms.ColumnHeader columnHeaderSize;
+        private System.Windows.Forms.ColumnHeader columnHeaderNodePath;
         private System.Windows.Forms.ColumnHeader columnHeaderType;
         private System.Windows.Forms.ToolStripMenuItem exportToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exportAllAssetsMenuItem;
@@ -1816,6 +1976,20 @@
         private System.Windows.Forms.ListView classesListView;
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ColumnHeader columnHeader1;
+        private System.Windows.Forms.TabPage tabPageCheck;
+        private System.Windows.Forms.ListView checkListView;
+        private System.Windows.Forms.ColumnHeader columnHeaderCheckSeverity;
+        private System.Windows.Forms.ColumnHeader columnHeaderCheckCategory;
+        private System.Windows.Forms.ColumnHeader columnHeaderCheckSource;
+        private System.Windows.Forms.ColumnHeader columnHeaderCheckTarget;
+        private System.Windows.Forms.ColumnHeader columnHeaderCheckMessage;
+        private System.Windows.Forms.ColumnHeader columnHeaderCheckNodePath;
+        private System.Windows.Forms.FlowLayoutPanel checkToolbarPanel;
+        private System.Windows.Forms.Label checkSummaryLabel;
+        private System.Windows.Forms.Button runCheckButton;
+        private System.Windows.Forms.RadioButton checkScopeSelectedRadio;
+        private System.Windows.Forms.RadioButton checkScopeWholeRadio;
+        private System.Windows.Forms.Label checkScopeLabel;
         private System.Windows.Forms.TextBox classTextBox;
         private System.Windows.Forms.ToolStripMenuItem exportClassStructuresMenuItem;
         private System.Windows.Forms.Label FMODcopyrightLabel;

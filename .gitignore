@@ -344,3 +344,6 @@ healthchecksdb
 
 # WorkBuddy workspace data
 .workbuddy/
+
+# Local scratch diagnostic harness (hardcoded local asset paths, generated images)
+_diag/

@@ -12,6 +12,10 @@
         <DebugType>embedded</DebugType>
     </PropertyGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="Diagnostics" />
+    </ItemGroup>
+
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net472' ">
         <IsPublishable>false</IsPublishable>
         <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -73,6 +77,15 @@
     </ItemGroup>
 
     <!-- Use local compiled win-x86 and win-x64 Texture2DDecoder libs, because libs from Kyaru.Texture2DDecoder.Windows were compiled with /MD flag -->
+
+    <!-- Native libs are normally copied next to the app after publishing. For a single-file build they must be part
+    of the publish set beforehand, otherwise they end up beside the exe instead of embedded in it. -->
+    <ItemGroup Condition=" '$(PublishSingleFile)' == 'true' AND '$(RuntimeIdentifier)' == 'win-x64' ">
+        <None Include="$(SolutionDir)Texture2DDecoderNative\bin\x64\$(Configuration)\Texture2DDecoderNative.dll" Link="Texture2DDecoderNative.dll" CopyToPublishDirectory="PreserveNewest" />
+        <None Include="$(SolutionDir)AssetStudioFBXNative\bin\x64\$(Configuration)\AssetStudioFBXNative.dll" Link="AssetStudioFBXNative.dll" CopyToPublishDirectory="PreserveNewest" />
+        <None Include="$(ProjectDir)Libraries\x64\fmod.dll" Link="fmod.dll" CopyToPublishDirectory="PreserveNewest" />
+        <None Include="$(ProjectDir)Libraries\x64\ooz.dll" Link="ooz.dll" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
     
     <Target Name="CopyExtraFilesPortable" AfterTargets="AfterBuild" Condition=" '$(RuntimeIdentifier)' == '' OR '$(TargetFramework)' == 'net472' ">
         <Message Text="Copying extra files for $(TargetFramework)... " Importance="high" />
@@ -122,7 +135,7 @@
         <Copy SourceFiles="$(ProjectDir)Libraries\x64\ooz.dll" DestinationFolder="$(TargetDir)" ContinueOnError="false" />
     </Target>
     
-    <Target Name="PublishExtraFilesWin" AfterTargets="Publish" Condition=" $(RuntimeIdentifier.Contains('win')) AND '$(TargetFramework)' != 'net472' ">
+    <Target Name="PublishExtraFilesWin" AfterTargets="Publish" Condition=" $(RuntimeIdentifier.Contains('win')) AND '$(TargetFramework)' != 'net472' AND '$(PublishSingleFile)' != 'true' ">
         <Message Text="Publishing extra files for $(RuntimeIdentifier)($(TargetFramework))... " Importance="high" />
         <Copy SourceFiles="$(TargetDir)\AssetStudioFBXNative.dll" DestinationFolder="$(PublishDir)" ContinueOnError="false" />
         <Copy SourceFiles="$(TargetDir)\Texture2DDecoderNative.dll" DestinationFolder="$(PublishDir)" ContinueOnError="false" />

@@ -8,13 +8,14 @@ namespace AssetStudioGUI
         public Object Asset;
         public SerializedFile SourceFile;
         public string Container = string.Empty;
+        public string NodePath = string.Empty;
         public string TypeString;
         public long m_PathID;
         public long FullSize;
         public ClassIDType Type;
         public string InfoText;
         public string UniqueID;
-        public GameObjectTreeNode TreeNode;
+        public TreeNode TreeNode;
 
         public enum SizeUnit
         {
@@ -57,6 +58,7 @@ namespace AssetStudioGUI
                 TypeString, //Type
                 m_PathID.ToString(), //PathID
                 FormatSize(FullSize), //Size
+                NodePath, //NodePath
             });
         }
     }

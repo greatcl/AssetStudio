@@ -458,11 +458,37 @@ namespace AssetStudioGUI
                                         objectAssetItemDic[m_Mesh].TreeNode = currentNode;
                                     }
                                 }
-                                else if (m_Component is SkinnedMeshRenderer m_SkinnedMeshRenderer)
+                                else if (m_Component is Renderer m_Renderer)
                                 {
-                                    if (m_SkinnedMeshRenderer.m_Mesh.TryGet(out var m_Mesh))
+                                    if (m_Renderer is SkinnedMeshRenderer m_SkinnedMeshRenderer)
                                     {
-                                        objectAssetItemDic[m_Mesh].TreeNode = currentNode;
+                                        if (m_SkinnedMeshRenderer.m_Mesh.TryGet(out var m_Mesh))
+                                        {
+                                            objectAssetItemDic[m_Mesh].TreeNode = currentNode;
+                                        }
+                                    }
+                                    // Link materials and their textures to this GameObject
+                                    if (m_Renderer.m_Materials != null)
+                                    {
+                                        foreach (var matPtr in m_Renderer.m_Materials)
+                                        {
+                                            if (matPtr.TryGet(out var m_Material))
+                                            {
+                                                if (objectAssetItemDic.TryGetValue(m_Material, out var matItem))
+                                                {
+                                                    matItem.TreeNode = currentNode;
+                                                }
+                                                LinkMaterialTextures(m_Material, currentNode, objectAssetItemDic, null, overwrite: true);
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    // Scan TypeTree for PPtr references in MonoBehaviour and other components
+                                    if (m_Component.serializedType?.m_Type != null)
+                                    {
+                                        LinkTypeTreeReferences(m_Component, currentNode, assetsFile, objectAssetItemDic);
                                     }
                                 }
                             }
@@ -496,10 +522,188 @@ namespace AssetStudioGUI
 
                 Progress.Report(++j, assetsFileCount);
             }
+
+            // Link orphan objects in PreloadTable to the bundle root node
+            foreach (var assetsFile in assetsManager.AssetsFileList)
+            {
+                foreach (var obj in assetsFile.Objects)
+                {
+                    if (obj is AssetBundle bundle && bundle.m_PreloadTable != null)
+                    {
+                        // Find or create a bundle root node
+                        var bundleNode = treeNodeCollection.FirstOrDefault(n => n.Text == assetsFile.fileName);
+                        if (bundleNode == null)
+                            continue;
+
+                        foreach (var pptr in bundle.m_PreloadTable)
+                        {
+                            if (pptr.TryGet(out var preloadObj) && objectAssetItemDic.TryGetValue(preloadObj, out var item))
+                            {
+                                if (item.TreeNode == null)
+                                {
+                                    item.TreeNode = bundleNode;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Update NodePath for assets with TreeNode (hierarchy path like "Root/Parent/Child")
+            foreach (var assetItem in exportableAssets)
+            {
+                if (assetItem.TreeNode != null)
+                {
+                    var parts = new System.Collections.Generic.List<string>();
+                    TreeNode node = assetItem.TreeNode;
+                    while (node != null)
+                    {
+                        parts.Insert(0, node.Text);
+                        node = node.Parent;
+                    }
+                    assetItem.NodePath = string.Join("/", parts);
+                    assetItem.SubItems[5].Text = assetItem.NodePath;
+                }
+            }
+
             treeNodeDictionary.Clear();
             objectAssetItemDic.Clear();
 
             return (productName, treeNodeCollection);
+        }
+
+        private static void LinkTypeTreeReferences(Object m_Component, GameObjectTreeNode currentNode, SerializedFile assetsFile,
+            Dictionary<Object, AssetItem> objectAssetItemDic)
+        {
+            var linkedObjects = new List<Object>();
+            ScanObjectReferences(m_Component, currentNode, assetsFile, objectAssetItemDic, linkedObjects);
+
+            // Recursively scan linked objects to follow reference chains
+            // (e.g. SkeletonGraphic -> SkeletonDataAsset -> SpineAtlasAsset -> Material -> Texture2D)
+            var scannedObjects = new HashSet<Object>();
+            while (linkedObjects.Count > 0)
+            {
+                var obj = linkedObjects[linkedObjects.Count - 1];
+                linkedObjects.RemoveAt(linkedObjects.Count - 1);
+                if (!scannedObjects.Add(obj))
+                    continue;
+
+                ScanObjectReferences(obj, currentNode, assetsFile, objectAssetItemDic, linkedObjects);
+            }
+        }
+
+        private static void ScanObjectReferences(Object obj, GameObjectTreeNode currentNode, SerializedFile assetsFile,
+            Dictionary<Object, AssetItem> objectAssetItemDic, List<Object> linkedObjects)
+        {
+            if (obj is Material m_Material)
+            {
+                LinkMaterialTextures(m_Material, currentNode, objectAssetItemDic, linkedObjects, overwrite: false);
+            }
+
+            try
+            {
+                var typeDict = obj.ToType();
+                if (typeDict != null)
+                {
+                    FindAndLinkPPtrs(typeDict, new HashSet<object>(), currentNode, assetsFile, objectAssetItemDic, linkedObjects);
+                }
+            }
+            catch
+            {
+                // ignore TypeTree read errors
+            }
+        }
+
+        // Scene structure must not be traversed: following GameObjects, Transforms or components of other
+        // objects lets the first scanned GameObject absorb the whole hierarchy via parent/child and
+        // cross-references. ScriptableObject-style MonoBehaviours have no host GameObject and are the
+        // actual data assets worth following (e.g. Spine SkeletonDataAsset/SpineAtlasAsset).
+        private static bool IsLinkableAsset(Object obj)
+        {
+            switch (obj)
+            {
+                case GameObject _:
+                    return false;
+                case MonoBehaviour m_MonoBehaviour:
+                    return m_MonoBehaviour.m_GameObject.IsNull;
+                case Component _:
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
+        // Material texture slots are only available as strongly typed properties,
+        // a TypeTree walk of a Material exposes m_Shader but not the textures in m_SavedProperties
+        private static void LinkMaterialTextures(Material m_Material, TreeNode currentNode,
+            Dictionary<Object, AssetItem> objectAssetItemDic, List<Object> linkedObjects, bool overwrite)
+        {
+            if (m_Material.m_SavedProperties?.m_TexEnvs == null)
+                return;
+
+            foreach (var texEnv in m_Material.m_SavedProperties.m_TexEnvs)
+            {
+                if (texEnv.Value?.m_Texture == null || !texEnv.Value.m_Texture.TryGet(out var m_Texture))
+                    continue;
+                if (!objectAssetItemDic.TryGetValue(m_Texture, out var texItem))
+                    continue;
+                if (!overwrite && texItem.TreeNode != null)
+                    continue;
+
+                texItem.TreeNode = currentNode;
+                linkedObjects?.Add(m_Texture);
+            }
+        }
+
+        private static void FindAndLinkPPtrs(object value, HashSet<object> visited,
+            GameObjectTreeNode currentNode, SerializedFile assetsFile, Dictionary<Object, AssetItem> objectAssetItemDic,
+            List<Object> linkedObjects)
+        {
+            if (value == null || !visited.Add(value))
+                return;
+
+            if (value is System.Collections.Specialized.OrderedDictionary dict)
+            {
+                long pptrPathID = 0;
+                int pptrFileID = -1;
+                if (dict.Contains("m_FileID") && dict.Contains("m_PathID"))
+                {
+                    pptrFileID = Convert.ToInt32(dict["m_FileID"]);
+                    pptrPathID = Convert.ToInt64(dict["m_PathID"]);
+                }
+                else if (dict.Contains("fileID") && dict.Contains("pathID"))
+                {
+                    pptrFileID = Convert.ToInt32(dict["fileID"]);
+                    pptrPathID = Convert.ToInt64(dict["pathID"]);
+                }
+
+                if (pptrFileID == 0 && pptrPathID != 0)
+                {
+                    if (assetsFile.ObjectsDic.TryGetValue(pptrPathID, out var referencedObj) && IsLinkableAsset(referencedObj))
+                    {
+                        if (objectAssetItemDic.TryGetValue(referencedObj, out var item))
+                        {
+                            if (item.TreeNode == null)
+                            {
+                                item.TreeNode = currentNode;
+                                linkedObjects.Add(referencedObj);
+                            }
+                        }
+                    }
+                }
+
+                foreach (System.Collections.DictionaryEntry entry in dict)
+                {
+                    FindAndLinkPPtrs(entry.Value, visited, currentNode, assetsFile, objectAssetItemDic, linkedObjects);
+                }
+            }
+            else if (value is System.Collections.IEnumerable enumerable && !(value is string))
+            {
+                foreach (var item in enumerable)
+                {
+                    FindAndLinkPPtrs(item, visited, currentNode, assetsFile, objectAssetItemDic, linkedObjects);
+                }
+            }
         }
 
         public static Dictionary<UnityVersion, SortedDictionary<int, TypeTreeItem>> BuildClassStructure()
